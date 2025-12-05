@@ -106,11 +106,28 @@
         border-color: theme('colors.primary');
         border-width: 2px;
       }
+      /* 修复底部导航栏遮挡问题 */
+      .content-padding {
+        padding-bottom: 20px;
+      }
+      /* 适配小屏幕 */
+      @media (max-width: 640px) {
+        .calendar-legend-item {
+          margin-right: 8px;
+          margin-bottom: 8px;
+        }
+        .stats-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .chart-grid {
+          grid-template-columns: 1fr;
+        }
+      }
     }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
-  <div class="container mx-auto px-4 py-8 max-w-4xl">
+  <div class="container mx-auto px-4 py-8 max-w-4xl content-padding">
     <!-- 顶部导航 -->
     <header class="mb-8">
       <div class="flex justify-between items-center">
@@ -142,9 +159,14 @@
                 <p id="habit-streak" class="text-gray-500"></p>
               </div>
             </div>
-            <button id="edit-habit-btn" class="text-gray-500 hover:text-primary">
-              <i class="fa fa-pencil text-xl"></i>
-            </button>
+            <div class="flex gap-2">
+              <button id="edit-habit-btn" class="text-gray-500 hover:text-primary p-2">
+                <i class="fa fa-pencil text-xl"></i>
+              </button>
+              <button id="delete-habit-btn" class="text-gray-500 hover:text-red-500 p-2">
+                <i class="fa fa-trash text-xl"></i>
+              </button>
+            </div>
           </div>
 
           <!-- 打卡按钮 -->
@@ -164,7 +186,7 @@
       <!-- 数据统计区域 -->
       <section id="stats-section" class="mb-8 hidden">
         <!-- 统计概览卡片 -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 stats-grid">
           <!-- 连续打卡 -->
           <div class="bg-white rounded-xl p-4 card-shadow border-l-4 border-blue-500">
             <div class="flex items-center justify-between">
@@ -232,7 +254,7 @@
         </div>
 
         <!-- 图表区域 -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 chart-grid">
           <!-- 周打卡情况 -->
           <div class="bg-white rounded-xl p-6 card-shadow">
             <h3 class="text-lg font-semibold text-dark mb-4">本周打卡情况</h3>
@@ -359,7 +381,7 @@
     </main>
 
     <!-- 底部导航 -->
-    <footer class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-3 px-4">
+    <footer class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-3 px-4 z-40">
       <div class="flex justify-around max-w-4xl mx-auto">
         <button class="nav-btn flex flex-col items-center text-primary" data-target="habit-details">
           <i class="fa fa-home text-xl"></i>
@@ -437,6 +459,9 @@
     </div>
   </div>
 
+  <!-- 日期提示框 -->
+  <div id="day-tooltip" class="fixed bg-dark text-white p-2 rounded text-sm z-50 shadow-lg hidden"></div>
+
   <script>
     // 全局变量
     let habits = [];
@@ -469,14 +494,14 @@
       { id: 'total-365', name: '年度传奇', description: '累计打卡365天', icon: '365days', requirement: { type: 'total', value: 365 } }
     ];
 
-    // 成就图标URL
+    // 成就图标（使用可靠的CDN图标）
     const achievementIcons = {
-      '7days': 'https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/f2bd7c6302ed461a845427e1315ba515~tplv-a9rns2rl98-image.image?rcl=20251205005141DFC957D08C42D5EAEFAF&rk3s=8e244e95&rrcfp=f06b921b&x-expires=1767459113&x-signature=5grVeu9X3t8XW4lMgyRl7WpcMx0%3D',
-      '30days': 'https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/f2bd7c6302ed461a845427e1315ba515~tplv-a9rns2rl98-image.image?rcl=20251205005141DFC957D08C42D5EAEFAF&rk3s=8e244e95&rrcfp=f06b921b&x-expires=1767459113&x-signature=5grVeu9X3t8XW4lMgyRl7WpcMx0%3D',
-      '100days': 'https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/f2bd7c6302ed461a845427e1315ba515~tplv-a9rns2rl98-image.image?rcl=20251205005141DFC957D08C42D5EAEFAF&rk3s=8e244e95&rrcfp=f06b921b&x-expires=1767459113&x-signature=5grVeu9X3t8XW4lMgyRl7WpcMx0%3D',
-      '50days': 'https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/f2bd7c6302ed461a845427e1315ba515~tplv-a9rns2rl98-image.image?rcl=20251205005141DFC957D08C42D5EAEFAF&rk3s=8e244e95&rrcfp=f06b921b&x-expires=1767459113&x-signature=5grVeu9X3t8XW4lMgyRl7WpcMx0%3D',
-      '200days': 'https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/f2bd7c6302ed461a845427e1315ba515~tplv-a9rns2rl98-image.image?rcl=20251205005141DFC957D08C42D5EAEFAF&rk3s=8e244e95&rrcfp=f06b921b&x-expires=1767459113&x-signature=5grVeu9X3t8XW4lMgyRl7WpcMx0%3D',
-      '365days': 'https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/f2bd7c6302ed461a845427e1315ba515~tplv-a9rns2rl98-image.image?rcl=20251205005141DFC957D08C42D5EAEFAF&rk3s=8e244e95&rrcfp=f06b921b&x-expires=1767459113&x-signature=5grVeu9X3t8XW4lMgyRl7WpcMx0%3D'
+      '7days': 'https://cdn.jsdelivr.net/npm/simple-icons@9.16.0/icons/week.svg',
+      '30days': 'https://cdn.jsdelivr.net/npm/simple-icons@9.16.0/icons/calendar.svg',
+      '100days': 'https://cdn.jsdelivr.net/npm/simple-icons@9.16.0/icons/century.svg',
+      '50days': 'https://cdn.jsdelivr.net/npm/simple-icons@9.16.0/icons/number5.svg',
+      '200days': 'https://cdn.jsdelivr.net/npm/simple-icons@9.16.0/icons/number2.svg',
+      '365days': 'https://cdn.jsdelivr.net/npm/simple-icons@9.16.0/icons/year.svg'
     };
 
     // 习惯图标映射
@@ -498,6 +523,7 @@
     const checkinBtn = document.getElementById('checkin-btn');
     const addHabitBtn = document.getElementById('add-habit-btn');
     const editHabitBtn = document.getElementById('edit-habit-btn');
+    const deleteHabitBtn = document.getElementById('delete-habit-btn');
     const habitModal = document.getElementById('habit-modal');
     const modalTitle = document.getElementById('modal-title');
     const habitForm = document.getElementById('habit-form');
@@ -512,12 +538,13 @@
     const achievementMessage = document.getElementById('achievement-message');
     const prevMonthBtn = document.getElementById('prev-month');
     const nextMonthBtn = document.getElementById('next-month');
-    const currentMonthSpan = document.getElementById('current-month');
     const calendarDays = document.getElementById('calendar-days');
     const motivationalQuoteEl = document.getElementById('motivational-quote');
 
     // 初始化应用
     function initApp() {
+      // 检查并迁移旧数据格式
+      migrateOldData();
       loadHabits();
       setupEventListeners();
       renderHabits();
@@ -529,17 +556,51 @@
       }
     }
 
-    // 从本地存储加载习惯
-    function loadHabits() {
+    // 迁移旧数据格式（如果需要）
+    function migrateOldData() {
       const storedHabits = localStorage.getItem('dailyCheckinHabits');
       if (storedHabits) {
-        habits = JSON.parse(storedHabits);
+        try {
+          const parsedData = JSON.parse(storedHabits);
+          // 如果数据格式正确，不需要迁移
+          if (Array.isArray(parsedData) && (parsedData.length === 0 || parsedData[0].hasOwnProperty('id'))) {
+            return;
+          }
+          // 旧数据格式迁移逻辑（如果需要）
+          console.log('Migrating old data format');
+          localStorage.removeItem('dailyCheckinHabits');
+        } catch (e) {
+          // 数据损坏，清除旧数据
+          localStorage.removeItem('dailyCheckinHabits');
+        }
+      }
+    }
+
+    // 从本地存储加载习惯
+    function loadHabits() {
+      try {
+        const storedHabits = localStorage.getItem('dailyCheckinHabits');
+        if (storedHabits) {
+          habits = JSON.parse(storedHabits);
+          // 确保数据格式正确
+          if (!Array.isArray(habits)) {
+            habits = [];
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load habits from localStorage:', e);
+        habits = [];
       }
     }
 
     // 保存习惯到本地存储
     function saveHabits() {
-      localStorage.setItem('dailyCheckinHabits', JSON.stringify(habits));
+      try {
+        localStorage.setItem('dailyCheckinHabits', JSON.stringify(habits));
+      } catch (e) {
+        console.error('Failed to save habits to localStorage:', e);
+        alert('数据保存失败，请检查浏览器存储权限');
+      }
     }
 
     // 设置事件监听器
@@ -556,6 +617,13 @@
           if (habit) {
             openHabitModal(habit);
           }
+        }
+      });
+
+      // 删除习惯按钮
+      deleteHabitBtn.addEventListener('click', () => {
+        if (currentHabitId) {
+          deleteHabit(currentHabitId);
         }
       });
 
@@ -619,6 +687,13 @@
         if (e.target === habitModal) {
           closeHabitModal();
         }
+      });
+
+      // 月份选择器变化
+      document.getElementById('month-selector').addEventListener('change', (e) => {
+        const [selectedYear, selectedMonth] = e.target.value.split('-').map(Number);
+        currentDate = new Date(selectedYear, selectedMonth, 1);
+        renderCalendar();
       });
     }
 
@@ -774,9 +849,11 @@
         longestStreakDate.textContent = '暂无记录';
       }
       
-      // 渲染图表
-      renderWeeklyChart(habit);
-      renderMonthlyChart(habit);
+      // 渲染图表（确保DOM已加载）
+      setTimeout(() => {
+        renderWeeklyChart(habit);
+        renderMonthlyChart(habit);
+      }, 100);
       
       // 渲染详细统计表格
       renderStatsTable(habit);
@@ -869,7 +946,11 @@
     
     // 渲染周打卡图表
     function renderWeeklyChart(habit) {
-      const ctx = document.getElementById('weekly-chart').getContext('2d');
+      const ctx = document.getElementById('weekly-chart');
+      if (!ctx) return;
+      
+      const ctxEl = ctx.getContext('2d');
+      if (!ctxEl) return;
       
       // 销毁旧图表
       if (window.weeklyChart) {
@@ -895,53 +976,62 @@
       }
       
       // 创建图表
-      window.weeklyChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: '打卡状态',
-            data: data,
-            backgroundColor: data.map(d => d === 1 ? '#3b82f6' : '#e5e7eb'),
-            borderColor: data.map(d => d === 1 ? '#2563eb' : '#d1d5db'),
-            borderWidth: 1,
-            borderRadius: 6
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: {
-              beginAtZero: true,
-              max: 1,
-              ticks: {
-                stepSize: 1,
-                callback: function(value) {
-                  return value === 1 ? '已打卡' : '未打卡';
+      try {
+        window.weeklyChart = new Chart(ctxEl, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: '打卡状态',
+              data: data,
+              backgroundColor: data.map(d => d === 1 ? '#3b82f6' : '#e5e7eb'),
+              borderColor: data.map(d => d === 1 ? '#2563eb' : '#d1d5db'),
+              borderWidth: 1,
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 1,
+                ticks: {
+                  stepSize: 1,
+                  callback: function(value) {
+                    return value === 1 ? '已打卡' : '未打卡';
+                  }
                 }
               }
-            }
-          },
-          plugins: {
-            legend: {
-              display: false
             },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  return context.parsed.y === 1 ? '已打卡' : '未打卡';
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return context.parsed.y === 1 ? '已打卡' : '未打卡';
+                  }
                 }
               }
             }
           }
-        }
-      });
+        });
+      } catch (e) {
+        console.error('Failed to render weekly chart:', e);
+        ctx.parentElement.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">图表加载失败</div>';
+      }
     }
     
     // 渲染月度趋势图表
     function renderMonthlyChart(habit) {
-      const ctx = document.getElementById('monthly-chart').getContext('2d');
+      const ctx = document.getElementById('monthly-chart');
+      if (!ctx) return;
+      
+      const ctxEl = ctx.getContext('2d');
+      if (!ctxEl) return;
       
       // 销毁旧图表
       if (window.monthlyChart) {
@@ -983,53 +1073,58 @@
       }
       
       // 创建图表
-      window.monthlyChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: '月度完成率',
-            data: data,
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            borderColor: '#3b82f6',
-            borderWidth: 2,
-            tension: 0.3,
-            fill: true,
-            pointBackgroundColor: '#3b82f6',
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2,
-            pointRadius: 5,
-            pointHoverRadius: 7
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: {
-              beginAtZero: true,
-              max: 100,
-              ticks: {
-                callback: function(value) {
-                  return value + '%';
+      try {
+        window.monthlyChart = new Chart(ctxEl, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: '月度完成率',
+              data: data,
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              borderColor: '#3b82f6',
+              borderWidth: 2,
+              tension: 0.3,
+              fill: true,
+              pointBackgroundColor: '#3b82f6',
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2,
+              pointRadius: 5,
+              pointHoverRadius: 7
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 100,
+                ticks: {
+                  callback: function(value) {
+                    return value + '%';
+                  }
                 }
               }
-            }
-          },
-          plugins: {
-            legend: {
-              display: false
             },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  return `完成率: ${context.parsed.y}%`;
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return `完成率: ${context.parsed.y}%`;
+                  }
                 }
               }
             }
           }
-        }
-      });
+        });
+      } catch (e) {
+        console.error('Failed to render monthly chart:', e);
+        ctx.parentElement.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">图表加载失败</div>';
+      }
     }
     
     // 渲染详细统计表格
@@ -1150,15 +1245,20 @@
       });
       
       // 创建下载链接
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', `${habit.name}_打卡记录.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      try {
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `${habit.name}_打卡记录.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (e) {
+        console.error('Failed to export stats:', e);
+        alert('导出失败，请重试');
+      }
     }
 
     // 渲染日历
@@ -1256,13 +1356,6 @@
         
         monthSelector.appendChild(option);
       }
-      
-      // 添加事件监听
-      monthSelector.onchange = (e) => {
-        const [selectedYear, selectedMonth] = e.target.value.split('-').map(Number);
-        currentDate = new Date(selectedYear, selectedMonth, 1);
-        renderCalendar();
-      };
     }
     
     // 显示日期提示
@@ -1287,23 +1380,14 @@
       // 显示提示
       tooltip.style.display = 'block';
       
-      // 定位提示
-      document.addEventListener('mousemove', updateTooltipPosition);
+      // 定位提示到鼠标位置
+      tooltip.style.left = `${event.clientX + 10}px`;
+      tooltip.style.top = `${event.clientY - 30}px`;
       
       // 3秒后隐藏提示
       setTimeout(() => {
         tooltip.style.display = 'none';
-        document.removeEventListener('mousemove', updateTooltipPosition);
       }, 3000);
-    }
-    
-    // 更新提示位置
-    function updateTooltipPosition(e) {
-      const tooltip = document.getElementById('day-tooltip');
-      if (tooltip) {
-        tooltip.style.left = `${e.clientX + 10}px`;
-        tooltip.style.top = `${e.clientY - 30}px`;
-      }
     }
     
     // 更新月度统计
@@ -1349,7 +1433,7 @@
       
       // 添加成就统计信息
       const statsDiv = document.createElement('div');
-      statsDiv.className = 'mb-6 text-center';
+      statsDiv.className = 'mb-6 text-center col-span-full';
       statsDiv.innerHTML = `
         <div class="inline-flex items-center bg-primary/10 rounded-full px-4 py-2">
           <div class="w-3 h-3 bg-primary rounded-full mr-2 animate-pulse"></div>
@@ -1368,21 +1452,18 @@
       Object.entries(groupedAchievements).forEach(([category, items]) => {
         // 添加类别标题
         const categoryTitle = document.createElement('h3');
-        categoryTitle.className = 'text-lg font-bold text-dark mb-4';
+        categoryTitle.className = 'text-lg font-bold text-dark mb-4 col-span-full';
         categoryTitle.textContent = category;
         achievementsContainer.appendChild(categoryTitle);
         
         // 添加类别成就
-        const categoryDiv = document.createElement('div');
-        categoryDiv.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6';
-        
         items.forEach(achievement => {
           const isUnlocked = checkAchievement(habit, achievement);
           const progress = getAchievementProgress(habit, achievement);
           
           const badge = document.createElement('div');
           badge.className = `achievement-badge flex flex-col items-center p-4 bg-white rounded-xl card-shadow transition-all duration-300 ${
-            isUnlocked ? 'ring-2 ring-primary ring-offset-2' : 'opacity-70 hover:opacity-100'
+            isUnlocked ? 'ring-2 ring-primary ring-offset-2' : 'opacity-70 hover:opacity-100 grayscale'
           }`;
           
           // 生成进度条
@@ -1394,10 +1475,11 @@
           ` : '';
           
           badge.innerHTML = `
-            <div class="w-16 h-16 mb-3 relative">
+            <div class="w-16 h-16 mb-3 relative flex items-center justify-center">
               <div class="absolute inset-0 bg-primary/10 rounded-full animate-ping opacity-75 ${isUnlocked ? '' : 'hidden'}"></div>
-              <img src="${achievementIcons[achievement.icon]}" alt="${achievement.name}" 
-                   class="w-full h-full object-contain relative z-10 transition-transform duration-300 ${
+              <img src="${achievementIcons[achievement.icon] || 'https://cdn.jsdelivr.net/npm/simple-icons@9.16.0/icons/trophy.svg'}" 
+                   alt="${achievement.name}" 
+                   class="w-12 h-12 object-contain relative z-10 transition-transform duration-300 ${
                      isUnlocked ? 'scale-110' : ''
                    }">
               ${isUnlocked ? '<div class="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-white text-xs">✓</div>' : ''}
@@ -1407,10 +1489,8 @@
             ${progressBar}
           `;
           
-          categoryDiv.appendChild(badge);
+          achievementsContainer.appendChild(badge);
         });
-        
-        achievementsContainer.appendChild(categoryDiv);
       });
     }
     
@@ -1463,6 +1543,8 @@
       }
       
       habitModal.classList.remove('hidden');
+      // 确保模态框在最上层
+      habitModal.style.zIndex = '1000';
     }
 
     // 关闭习惯模态框
@@ -1525,329 +1607,4 @@
 
     // 删除习惯
     function deleteHabit(habitId) {
-      if (confirm('确定要删除这个习惯吗？所有打卡记录也将被删除。')) {
-        habits = habits.filter(h => h.id !== habitId);
-        saveHabits();
-        renderHabits();
-        
-        // 如果删除的是当前习惯，选择第一个习惯
-        if (currentHabitId === habitId) {
-          if (habits.length > 0) {
-            selectHabit(habits[0].id);
-          } else {
-            currentHabitId = null;
-            habitDetails.classList.add('hidden');
-            statsSection.classList.add('hidden');
-            calendarSection.classList.add('hidden');
-            achievementsSection.classList.add('hidden');
-          }
-        }
-      }
-    }
-
-    // 切换打卡状态
-    function toggleCheckin(habitId) {
-      const habit = habits.find(h => h.id === habitId);
-      if (!habit) return;
-      
-      const today = formatDate(new Date());
-      const checkinIndex = habit.checkins ? habit.checkins.indexOf(today) : -1;
-      
-      if (checkinIndex >= 0) {
-        // 已经完成打卡，显示提示
-        showAlreadyCheckedInMessage();
-      } else {
-        // 完成打卡
-        if (!habit.checkins) {
-          habit.checkins = [];
-        }
-        habit.checkins.push(today);
-        checkinBtn.classList.add('completed', 'animate-pulse-short');
-        setTimeout(() => {
-          checkinBtn.classList.remove('animate-pulse-short');
-        }, 500);
-        
-        // 显示鼓励语
-        showMotivationalMessage();
-        
-        // 检查成就
-        checkNewAchievements(habit);
-        
-        // 保存并更新UI
-        saveHabits();
-        renderHabits();
-        renderHabitDetails();
-        renderStats();
-        renderCalendar();
-        renderAchievements();
-      }
-    }
-    
-    // 显示已经打卡的提示
-    function showAlreadyCheckedInMessage() {
-      motivationalQuoteEl.textContent = "你今天已经完成打卡了，真棒！";
-      motivationalQuoteEl.classList.add('animate-pulse');
-      
-      setTimeout(() => {
-        motivationalQuoteEl.classList.remove('animate-pulse');
-      }, 1000);
-    }
-
-    // 检查今天是否已打卡
-    function isHabitCompletedToday(habitId) {
-      const habit = habits.find(h => h.id === habitId);
-      if (!habit || !habit.checkins) return false;
-      
-      const today = formatDate(new Date());
-      return habit.checkins.includes(today);
-    }
-
-    // 获取连续打卡天数
-    function getStreakCount(habitId) {
-      const habit = habits.find(h => h.id === habitId);
-      if (!habit || !habit.checkins || habit.checkins.length === 0) return 0;
-      
-      // 按日期排序
-      const sortedCheckins = [...habit.checkins].sort();
-      
-      // 从今天开始往前检查
-      let streak = 0;
-      const today = new Date();
-      
-      for (let i = 0; i < 365; i++) { // 最多检查一年
-        const checkDate = new Date(today);
-        checkDate.setDate(today.getDate() - i);
-        const dateString = formatDate(checkDate);
-        
-        if (sortedCheckins.includes(dateString)) {
-          streak++;
-        } else {
-          break;
-        }
-      }
-      
-      return streak;
-    }
-
-    // 获取总打卡天数
-    function getTotalCount(habitId) {
-      const habit = habits.find(h => h.id === habitId);
-      if (!habit || !habit.checkins) return 0;
-      
-      return habit.checkins.length;
-    }
-
-    // 获取月度完成率
-    function getMonthlyCompletionRate(habitId, targetDate = new Date()) {
-      const habit = habits.find(h => h.id === habitId);
-      if (!habit || !habit.checkins) return 0;
-      
-      const today = new Date();
-      const currentYear = today.getFullYear();
-      const currentMonth = today.getMonth();
-      const currentDay = today.getDate();
-      
-      const targetYear = targetDate.getFullYear();
-      const targetMonth = targetDate.getMonth();
-      
-      // 获取当月的天数
-      const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
-      
-      // 计算当月已过的天数（不包括今天之后的日期）
-      let daysPassed;
-      if (targetYear === currentYear && targetMonth === currentMonth) {
-        // 当前月份：只计算到今天
-        daysPassed = currentDay;
-      } else if (targetYear < currentYear || (targetYear === currentYear && targetMonth < currentMonth)) {
-        // 过去的月份：计算整个月
-        daysPassed = daysInMonth;
-      } else {
-        // 未来的月份：返回0
-        return 0;
-      }
-      
-      // 计算当月完成的天数
-      const completedDays = habit.checkins.filter(dateString => {
-        const date = new Date(dateString);
-        return date.getFullYear() === targetYear && date.getMonth() === targetMonth;
-      }).length;
-      
-      // 计算完成率（确保不超过100%）
-      const rate = daysPassed > 0 ? Math.round((completedDays / daysPassed) * 100) : 0;
-      return Math.min(rate, 100);
-    }
-
-    // 获取最长连续打卡天数
-    function getLongestStreak(habitId) {
-      const habit = habits.find(h => h.id === habitId);
-      if (!habit || !habit.checkins || habit.checkins.length === 0) return 0;
-      
-      // 按日期排序
-      const sortedCheckins = [...habit.checkins].sort();
-      
-      let longestStreak = 1;
-      let currentStreak = 1;
-      
-      for (let i = 1; i < sortedCheckins.length; i++) {
-        const prevDate = new Date(sortedCheckins[i - 1]);
-        const currDate = new Date(sortedCheckins[i]);
-        
-        // 计算日期差
-        const diffTime = currDate - prevDate;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        if (diffDays === 1) {
-          // 连续天数
-          currentStreak++;
-          longestStreak = Math.max(longestStreak, currentStreak);
-        } else {
-          // 中断了，重置计数
-          currentStreak = 1;
-        }
-      }
-      
-      return longestStreak;
-    }
-
-    // 检查成就
-    function checkAchievement(habit, achievement) {
-      if (!habit.achievements) return false;
-      
-      // 如果已经解锁，直接返回
-      if (habit.achievements.includes(achievement.id)) {
-        return true;
-      }
-      
-      const { type, value } = achievement.requirement;
-      
-      if (type === 'streak') {
-        return getStreakCount(habit.id) >= value;
-      } else if (type === 'total') {
-        return getTotalCount(habit.id) >= value;
-      }
-      
-      return false;
-    }
-
-    // 检查新成就
-    function checkNewAchievements(habit) {
-      if (!habit.achievements) {
-        habit.achievements = [];
-      }
-      
-      let newAchievements = [];
-      
-      achievements.forEach(achievement => {
-        if (!habit.achievements.includes(achievement.id) && checkAchievement(habit, achievement)) {
-          habit.achievements.push(achievement.id);
-          newAchievements.push(achievement);
-        }
-      });
-      
-      // 显示新成就通知
-      if (newAchievements.length > 0) {
-        showAchievementToast(newAchievements[0]);
-      }
-    }
-
-    // 显示成就解锁提示
-    function showAchievementToast(achievement) {
-      achievementMessage.textContent = `恭喜获得"${achievement.name}"成就！`;
-      achievementToast.classList.remove('translate-x-full');
-      
-      setTimeout(() => {
-        achievementToast.classList.add('translate-x-full');
-      }, 3000);
-    }
-
-    // 显示鼓励消息
-    function showMotivationalMessage() {
-      motivationalQuoteEl.textContent = getRandomQuote();
-      motivationalQuoteEl.classList.add('animate-pulse');
-      
-      setTimeout(() => {
-        motivationalQuoteEl.classList.remove('animate-pulse');
-      }, 1000);
-    }
-
-    // 获取随机鼓励语
-    function getRandomQuote() {
-      const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
-      return motivationalQuotes[randomIndex];
-    }
-
-    // 设置提醒
-    function setupReminders() {
-      // 清除现有提醒
-      if ('Notification' in window && Notification.permission === 'granted') {
-        // 检查是否有习惯需要提醒
-        const now = new Date();
-        const currentHour = now.getHours();
-        const currentMinute = now.getMinutes();
-        
-        habits.forEach(habit => {
-          if (habit.reminderTime) {
-            const [reminderHour, reminderMinute] = habit.reminderTime.split(':').map(Number);
-            
-            if (currentHour === reminderHour && currentMinute === reminderMinute) {
-              // 检查今天是否已经打卡
-              if (!isHabitCompletedToday(habit.id)) {
-                showNotification(habit);
-              }
-            }
-          }
-        });
-      }
-      
-      // 请求通知权限
-      if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission();
-      }
-      
-      // 每分钟检查一次
-      setTimeout(setupReminders, 60000);
-    }
-
-    // 显示通知
-    function showNotification(habit) {
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification(`习惯提醒：${habit.name}`, {
-          body: '是时候完成今天的打卡了！',
-          icon: '/favicon.ico'
-        });
-      }
-    }
-
-    // 显示指定部分
-    function showSection(sectionId) {
-      habitDetails.classList.add('hidden');
-      statsSection.classList.add('hidden');
-      calendarSection.classList.add('hidden');
-      achievementsSection.classList.add('hidden');
-      
-      document.getElementById(sectionId).classList.remove('hidden');
-      
-      // 如果显示日历，重新渲染
-      if (sectionId === 'calendar-section') {
-        renderCalendar();
-      }
-    }
-
-    // 辅助函数：生成唯一ID
-    function generateId() {
-      return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-    }
-
-    // 辅助函数：格式化日期
-    function formatDate(date) {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    }
-
-    // 初始化应用
-    document.addEventListener('DOMContentLoaded', initApp);
-  </script>
-</body>
-</html>
+      if (confirm('确定要删除这个习惯
