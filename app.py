@@ -40,7 +40,7 @@
       }
      
       .calendar-day-today {
-        border: 2px solid theme('colors.primary');
+        border: px solid theme('colors.primary');
         font-weight: bold;
       }
       .calendar-day-other-month {
