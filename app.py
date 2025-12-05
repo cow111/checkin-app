@@ -39,14 +39,14 @@
         content-visibility: auto;
       }
       .text-shadow {
-        text-shadow: 0 px px rgba(0,0,0,0.1);
+        text-shadow: 0 px 4px rgba(0,0,0,0.1);
       }
       .card-shadow {
-        box-shadow: 0 px px -px rgba(0, 0, 0, 0.1), 0 px px -px rgba(0, 0, 0, 0.06);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
       }
       .calendar-day {
         aspect-ratio: 1/1;
-        transition: all 0s ease;
+        transition: all 0.2s ease;
         cursor: pointer;
       }
       .calendar-day:hover {
