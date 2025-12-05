@@ -46,7 +46,7 @@
       }
       .calendar-day {
         aspect-ratio: 1/1;
-        transition: all 0.2s ease;
+        transition: all 0s ease;
         cursor: pointer;
       }
       .calendar-day:hover {
