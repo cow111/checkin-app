@@ -38,27 +38,7 @@
       .content-auto {
         content-visibility: auto;
       }
-      .card-shadow {
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      }
-      .calendar-day {
-        aspect-ratio: 1/1;
-        transition: all 0.2s ease;
-        cursor: pointer;
-      }
-      .calendar-day:hover {
-        background-color: rgba(59, 130, 246, 0.1);
-      }
-      .calendar-day-completed {
-        background-color: theme('colors.primary');
-        color: white;
-        border-radius: 50%;
-        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
-      }
-      .calendar-day-completed:hover {
-        background-color: theme('colors.primary');
-        transform: scale(1.05);
-      }
+     
       .calendar-day-today {
         border: 2px solid theme('colors.primary');
         font-weight: bold;
